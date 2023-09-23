@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Rubik', sans-serif;
+  box-sizing: content-box; /* or box-sizing: border-box; */
+}
+div, img {
+  border: none; /* Or specify the same border properties */
+}
+
+.navbar-visible {
+  max-height: 1000px;
+  opacity: 1;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.navbar-hidden {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  /* Adjust the duration and easing as needed */
+}
+
+.nav-content.active {
+  max-height: 1000px;
+  /* Adjust the maximum height as needed */
+}
+
+@layer components {
+  .form-input {
+    @apply w-60 m-3 rounded-lg disabled:opacity-40 focus:bg-gray-100;
+  }
+
+}
+
+@layer components {
+  .form-label {
+    @apply w-24 text-center flex flex-col justify-center;
+  }
+}
+
+@layer components {
+  .form-input-container {
+    @apply m-1 flex justify-start;
+  }
+}
+
+@layer components {
+  .form-button {
+    @apply w-72 font-semibold bg-yellow-400 m-3 p-2 rounded-lg text-gray-900 hover:bg-yellow-500;
+  }
+}
+
+@layer components {
+  .error-area{
+    @apply w-60 font-semibold rounded-lg p-1 text-red-800 text-center inline bg-red-300;
+  }
+}
+
+@layer components {
+  .image-cover{
+    @apply absolute top-0 left-0 bg-black opacity-50 rounded-xl m-5;
+    width: 94%;
+    height: 94%;
+  }
+}
