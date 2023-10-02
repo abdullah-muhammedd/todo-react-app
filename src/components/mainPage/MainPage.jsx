@@ -5,7 +5,9 @@ import { useNavigate } from 'react-router-dom';
 //? Locale
 import Nav from './Nav/Nav'
 import { userReducer } from "../../slices/userSlice"
+import StickyWall from '../stickyWall/StickyWall';
 
+import { Route, Routes } from 'react-router-dom';
 function MainPage() {
     // * Hooks
     const isLoggedIn = userReducer.getState().loggedIn
@@ -20,7 +22,12 @@ function MainPage() {
     return (
         <>
             {/* The Left Navbar */}
-            <Nav />
+            <div className='flex'>
+                <Nav />
+                <Routes>
+                    <Route path="/sticky-wall" element={<StickyWall />} />
+                </Routes>
+            </div>
             {/* The Main View Component */}
             {/* The Tooggler right bar  */}
         </>

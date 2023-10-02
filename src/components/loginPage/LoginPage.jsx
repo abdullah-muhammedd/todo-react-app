@@ -3,11 +3,17 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { useMutation } from '@tanstack/react-query';
 
 // ? Locale
 import FormErrorArea from "../FormErrorArea";
 import { postLogin } from "../../client/auth"
 import { userReducer, loggedIn } from "../../slices/userSlice"
+import LoadingSpinner from "../LoadingSpinner";
+import ErrorPage from "../ErrorPage";
+
+
+
 
 function LoginPage() {
 
@@ -27,6 +33,9 @@ function LoginPage() {
         password: Yup.string().trim().min(8, "Password Cannot Be Correct").required("Password Is Required"),
     })
 
+    //* React Query
+    const loginMutation = useMutation({ mutationFn: async (userData) => { return postLogin(userData) } });
+
     //* Form Control
     const {
         handleSubmit,
@@ -43,17 +52,28 @@ function LoginPage() {
         validationSchema: Schema,
         onSubmit: async (values) => {
             let userData = values;
-            const result = await postLogin(userData)
-            if (!result.error) {
+            const result = await loginMutation.mutateAsync(userData)
+            if (!result?.data?.error) {
                 userReducer.dispatch(loggedIn());
                 navigate('/app')
             }
             else {
-                if (result.error.message === "Entity Not Found") { setApiError("User Is Not Registered"); }
-                else { setApiError(result.error.message); }
+                if (result?.data?.error?.message === "Entity Not Found") { setApiError("User Is Not Registered"); }
+                else { setApiError(result.data.error.message); }
             }
         },
     });
+
+
+    //* Loading 
+    if (loginMutation.isLoading) {
+        return (<LoadingSpinner />)
+    }
+
+    //* Error 
+    if (loginMutation.isError) {
+        return (<ErrorPage message={loginMutation.error.message} />)
+    }
 
     //* Component 
     return (

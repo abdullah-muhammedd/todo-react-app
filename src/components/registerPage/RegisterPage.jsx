@@ -3,11 +3,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { useMutation } from '@tanstack/react-query';
 
 //? Locale
 import FormErrorArea from "../FormErrorArea";
 import { postSignup } from "../../client/auth"
 import { userReducer } from "../../slices/userSlice"
+import LoadingSpinner from "../LoadingSpinner";
+import ErrorPage from "../ErrorPage";
 
 function RegisterPage() {
 
@@ -33,6 +36,9 @@ function RegisterPage() {
         confirmPassword: Yup.string().trim().oneOf([Yup.ref('password'), null], 'Passwords must match').required("Confirm Password Is Required"),
     })
 
+    //* React Quey 
+    const registerMutation = useMutation({ mutationFn: async (userData) => { return postSignup(userData) } });
+
     //* Form Control
     const {
         handleSubmit,
@@ -53,7 +59,7 @@ function RegisterPage() {
         validationSchema: Schema,
         onSubmit: async (values) => {
             let userData = values;
-            const result = await postSignup(userData)
+            const result = await registerMutation.mutateAsync(userData)
             if (!result.error) {
                 navigate('/login')
             }
@@ -62,6 +68,16 @@ function RegisterPage() {
             }
         },
     });
+
+    //* Loading 
+    if (registerMutation.isLoading) {
+        return (<LoadingSpinner />)
+    }
+
+    //* Error 
+    if (registerMutation.isError) {
+        return (<ErrorPage message={registerMutation.error.message} />)
+    }
 
     //* Component 
     return (

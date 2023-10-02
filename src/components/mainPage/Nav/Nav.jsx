@@ -25,7 +25,7 @@ export default function Nav() {
     };
 
     const handleLogout = async () => {
-        const res = await getLogout()
+        await getLogout()
         userReducer.dispatch(loggedOut());
         navigate("/login")
     };
