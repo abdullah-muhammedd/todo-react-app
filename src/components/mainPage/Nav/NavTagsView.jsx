@@ -62,6 +62,9 @@ export default function NavTagsView() {
                 queryKey: ["tagsCount"],
                 queryFn: async () => {
                     const response = await getTagsCount();
+                    if (response.error) {
+                        throw response.error
+                    }
                     return response.count;
                 },
                 staleTime: 5 * 60 * 1000
@@ -70,6 +73,9 @@ export default function NavTagsView() {
                 queryKey: ["tags", page],
                 queryFn: async () => {
                     const response = await getTags(page, 3);
+                    if (response.error) {
+                        throw response.error
+                    }
                     return response.tags;
                 },
                 keepPreviousData: true,
@@ -227,7 +233,7 @@ function AddTagForm({ closeModal }) {
             // * Invalidate Caching
             queryClient.invalidateQueries(["tags"])
             queryClient.invalidateQueries(["tagsCount"])
-            navigate(-1)
+            closeModal()
         }
     });
 
@@ -295,7 +301,6 @@ function AddTagForm({ closeModal }) {
                             name='color'
                             className='form-input'
                             placeholder='Color'
-                            value="#00FF00"
                             onChange={handleChange}
                             onBlur={handleBlur}
                         />
@@ -332,7 +337,7 @@ function UpdateTagForm({ tag, closeModal }) {
             // * Invalidate Caching
             queryClient.invalidateQueries(["tags"])
             queryClient.invalidateQueries(["tagsCount"])
-            navigate(-1)
+            closeModal()
         }
     });
 
@@ -391,7 +396,7 @@ function UpdateTagForm({ tag, closeModal }) {
                             name='heading'
                             className='form-input'
                             placeholder='Heading'
-                            value={tag.heading}
+                            value={values.heading}
                             onChange={handleChange}
                             onBlur={handleBlur} />
                         <FormErrorArea condition={touched.heading && errors.heading} message={errors.heading} />
@@ -402,7 +407,7 @@ function UpdateTagForm({ tag, closeModal }) {
                             name='color'
                             className='form-input'
                             placeholder='Color'
-                            value={tag.color}
+                            value={values.color}
                             onChange={handleChange}
                             onBlur={handleBlur}
                         />
@@ -431,7 +436,7 @@ function DeleteTagPrompt({ tag, closeModal }) {
             // * Invalidate Caching
             queryClient.invalidateQueries(["tags"])
             queryClient.invalidateQueries(["tagsCount"])
-            navigate(-1)
+            closeModal()
         }
     });
     // * Handlers
@@ -443,7 +448,7 @@ function DeleteTagPrompt({ tag, closeModal }) {
     }
 
     function No() {
-        navigate(-1);
+        closeModal()
     }
 
     //* Loading 

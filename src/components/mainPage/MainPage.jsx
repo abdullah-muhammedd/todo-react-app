@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import Nav from './Nav/Nav'
 import { userReducer } from "../../slices/userSlice"
 import StickyWall from '../stickyWall/StickyWall';
-
+import Inbox from '../Tasks/Inbox';
 import { Route, Routes } from 'react-router-dom';
 function MainPage() {
     // * Hooks
@@ -26,6 +26,7 @@ function MainPage() {
                 <Nav />
                 <Routes>
                     <Route path="/sticky-wall" element={<StickyWall />} />
+                    <Route path="/inbox" element={<Inbox />} />
                 </Routes>
             </div>
             {/* The Main View Component */}

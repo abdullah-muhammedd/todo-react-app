@@ -20,19 +20,21 @@ div, img {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  transition:max-height 0.2s ease, opacity 0.3s ease;
 }
 
 .nav-content {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease;
-  /* Adjust the duration and easing as needed */
+  transition:max-height 0.2s ease;
+
 }
 
 .nav-content.active {
-  max-height: 1000px;
-  /* Adjust the maximum height as needed */
+  max-height: calc(100% - 3rem); 
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #eee transparent;
 }
 
 @layer components {

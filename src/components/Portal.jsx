@@ -11,7 +11,7 @@ const modalStyles = {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-    zIndex: 1000, // Ensure the modal is on top
+    zIndex: 2000, // Ensure the modal is on top
 };
 
 export default function Portal({ children }) {
