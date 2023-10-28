@@ -7,7 +7,11 @@ import Nav from './Nav/Nav'
 import { userReducer } from "../../slices/userSlice"
 import StickyWall from '../stickyWall/StickyWall';
 import Inbox from '../Tasks/Inbox';
+import Upcomming from '../Tasks/Upcomming';
 import { Route, Routes } from 'react-router-dom';
+import Today from '../Tasks/Today';
+import TasksByList from '../Tasks/ByList';
+import TasksByTag from '../Tasks/ByTag';
 function MainPage() {
     // * Hooks
     const isLoggedIn = userReducer.getState().loggedIn
@@ -21,16 +25,17 @@ function MainPage() {
     // * Component
     return (
         <>
-            {/* The Left Navbar */}
             <div className='flex'>
                 <Nav />
                 <Routes>
                     <Route path="/sticky-wall" element={<StickyWall />} />
                     <Route path="/inbox" element={<Inbox />} />
+                    <Route path="/upcomming" element={<Upcomming />} />
+                    <Route path="/today" element={<Today />} />
+                    <Route path="/by-list" element={<TasksByList />} />
+                    <Route path="/by-tag" element={<TasksByTag />} />
                 </Routes>
             </div>
-            {/* The Main View Component */}
-            {/* The Tooggler right bar  */}
         </>
     )
 

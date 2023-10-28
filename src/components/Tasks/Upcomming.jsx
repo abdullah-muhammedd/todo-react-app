@@ -14,16 +14,15 @@ import ErrorPage from '../ErrorPage'
 import Portal from '../Portal'
 import SmallSpinner from '../SmallSpinner'
 import TasksView from './TasksView'
-import { getTasksNonDone, postTask } from '../../client/tasks'
+import { getTasksUpcomming, postTask } from '../../client/tasks'
 import { getLists, getListsCount } from '../../client/lists'
 import { getTags, getTagsCount } from '../../client/tags'
 
 //& The Main Component 
-export default function Inbox() {
+export default function Upcomming() {
     //* Hooks
     const bottomRef = useRef(null);
-    const [inboxCount, setInboxCount] = useState(0);
-    const [focusedTask, setFocusedTask] = useState({});
+    const [upcommingCount, setupcommingCount] = useState(0);
 
     //* Add Task Form Modal Control
     const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
@@ -35,23 +34,12 @@ export default function Inbox() {
         setIsAddTaskModalOpen(false);
     };
 
-    // // //* Delete List Check Prompt Control
-    // const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-
-    // const openDeleteNoteModal = () => {
-    //     setIsDeleteModalOpen(true);
-    // };
-
-    // const closeDeleteNoteModal = () => {
-    //     setIsDeleteModalOpen(false);
-    // };
-
     //* Queries 
     const countQuery = useQuery(
         {
-            queryKey: ["tasksCount", "inboxCount"],
+            queryKey: ["tasksCount", "upcommingCount"],
             queryFn: async () => {
-                const response = await getTasksNonDone();
+                const response = await getTasksUpcomming();
                 if (response.error) {
                     throw response.error
                 }
@@ -70,9 +58,9 @@ export default function Inbox() {
         hasNextPage,
         isFetchingNextPage,
     } = useInfiniteQuery({
-        queryKey: ["tasks", "inbox"],
+        queryKey: ["tasks", "upcomming"],
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await getTasksNonDone(pageParam, 20);
+            const response = await getTasksUpcomming(pageParam, 20);
             if (response.error) {
                 throw response.error;
             }
@@ -80,7 +68,7 @@ export default function Inbox() {
         },
         getNextPageParam: (lastPage, allPages) => {
             const nextPage = allPages.length + 1;
-            return nextPage > Math.ceil(inboxCount / 20) ? undefined : nextPage;
+            return nextPage > Math.ceil(upcommingCount / 20) ? undefined : nextPage;
         },
         staleTime: 5 * 60 * 1000
     });
@@ -90,7 +78,7 @@ export default function Inbox() {
     useEffect(() => {
         (async () => {
             if (countQuery.data) {
-                setInboxCount(countQuery.data);
+                setupcommingCount(countQuery.data);
             }
 
             const handleScroll = () => {
@@ -153,17 +141,9 @@ export default function Inbox() {
                     </Portal >
                 ) : null
             }
-            {/*
 
-            {
-                isDeleteModalOpen ? (
-                    <Portal>
-                        <DeleteNotePrompt note={focusedNote} closeModal={closeDeleteNoteModal} />
-                    </Portal>
-                ) : null
-            } */}
             <div className={`bg-gray-100 w-full h-fit my-3 mx-3 p-6 rounded-lg text-gray-700 relative`}>
-                <h1 className='md:text-4xl text-3xl font ml-14'>Inbox<span className='m-1 px-3 py-1 bg-gray-300 rounded-md '>{inboxCount}</span></h1>
+                <h1 className='md:text-4xl text-3xl font ml-14'>Upcomming<span className='m-1 px-3 py-1 bg-gray-300 rounded-md '>{upcommingCount}</span></h1>
                 <div className='flex flex-col items-center my-5 h-full'>
                     <div className="w-full h-12 rounded-md p-2 my-2 border border-solid  border-gray-300 hover:bg-gray-300 flex items-center cursor-pointer mx-auto" onClick={() => { openAddTaskModal() }} >
                         <span className=' p-2 text-lg w-full '>
@@ -189,7 +169,6 @@ function AddTaskForm({ closeModal }) {
     let queryClient = useQueryClient();
     let [apiError, setApiError] = useState('');
     let subtasksRef = useRef(null);
-    const navigate = useNavigate();
 
     // * Validation Schema
     const Schema = Yup.object({
@@ -201,7 +180,7 @@ function AddTaskForm({ closeModal }) {
         subTasks: Yup.array().of(Yup.object({
             heading: Yup.string().trim(),
             done: Yup.boolean()
-        })).default([])
+        }))
     })
 
     // * Mutation
@@ -287,11 +266,12 @@ function AddTaskForm({ closeModal }) {
         setFieldValue
     } = useFormik({
         initialValues: {
-            heading: "",
-            dueDate: "",
-            listID: "",
-            tagID: "",
-            subTasks: []
+            heading: undefined,
+            dueDate: undefined,
+            description: undefined,
+            listID: undefined,
+            tagID: undefined,
+            subTasks: undefined
         },
         validationSchema: Schema,
         onSubmit: async (values) => {
@@ -348,7 +328,7 @@ function AddTaskForm({ closeModal }) {
                         name='description'
                         className='form-input'
                         placeholder='Description'
-                        value={values.content}
+                        value={values.description}
                         onChange={handleChange}
                         onBlur={handleBlur} />
                     <FormErrorArea condition={touched.description && errors.description} message={errors.description} />
@@ -367,12 +347,11 @@ function AddTaskForm({ closeModal }) {
 
 
                     <select name="listID" value={values.listID} id="listID" className='form-input' onChange={handleChange}
-                        onBlur={handleBlur}>
-                        <option value={null} selected>--List</option>
+                        onBlur={handleBlur} defaultValue={null}>
                         {
                             listsQuery.data.map(list => {
                                 return (
-                                    <option value={list._id}> {list.heading}</option>
+                                    <option key={list._id} value={list._id}> {list.heading}</option>
                                 )
                             })
                         }
@@ -380,12 +359,11 @@ function AddTaskForm({ closeModal }) {
                     <FormErrorArea condition={touched.listID && errors.listID} message={errors.listID} />
 
                     <select name="tagID" value={values.tagID} id="tagID" className='form-input' onChange={handleChange}
-                        onBlur={handleBlur}>
-                        <option value={null} selected>--Tag</option>
+                        onBlur={handleBlur} defaultValue={null}>
                         {
                             tagsQuery.data.map(tag => {
                                 return (
-                                    <option value={tag._id} > {tag.heading}</option>
+                                    <option key={tag._id} value={tag._id} > {tag.heading}</option>
                                 )
                             })
                         }
@@ -395,17 +373,17 @@ function AddTaskForm({ closeModal }) {
                     <div className="w-full h-12 rounded-md p-2 my-2 border border-solid border-gray-300 hover:bg-gray-300 flex items-center cursor-pointer mx-auto"
                         onClick={() => {
                             const newSubtask = {
-                                heading: '',
+                                heading: undefined,
                                 done: false,
                             };
-                            setFieldValue('subTasks', [...values.subTasks, newSubtask]);
+                            setFieldValue('subTasks', [...values?.subTasks, newSubtask]);
                         }}>
                         <span className="p-2 text-sm w-full">
                             <FontAwesomeIcon icon={faPlus} /> Add Subtask
                         </span>
                     </div>
                     <div ref={subtasksRef}>
-                        {values.subTasks.map((subtask, index) => (
+                        {values?.subTasks?.map((subtask, index) => (
                             <div key={index} className="w-full h-12 rounded-md p-2 my-2 flex items-center cursor-pointer mx-auto">
                                 <input
                                     type="checkbox"

@@ -14,10 +14,9 @@ import ErrorPage from '../ErrorPage'
 import Portal from '../Portal'
 import SmallSpinner from '../SmallSpinner'
 import TasksView from './TasksView'
-import { getTasksNonDone, postTask } from '../../client/tasks'
+import { getAllTasks, postTask } from '../../client/tasks'
 import { getLists, getListsCount } from '../../client/lists'
 import { getTags, getTagsCount } from '../../client/tags'
-import { list } from 'postcss'
 
 //& The Main Component 
 export default function Inbox() {
@@ -41,7 +40,7 @@ export default function Inbox() {
         {
             queryKey: ["tasksCount", "inboxCount"],
             queryFn: async () => {
-                const response = await getTasksNonDone();
+                const response = await getAllTasks();
                 if (response.error) {
                     throw response.error
                 }
@@ -62,7 +61,7 @@ export default function Inbox() {
     } = useInfiniteQuery({
         queryKey: ["tasks", "inbox"],
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await getTasksNonDone(pageParam, 20);
+            const response = await getAllTasks(pageParam, 20);
             if (response.error) {
                 throw response.error;
             }
@@ -180,7 +179,7 @@ function AddTaskForm({ closeModal }) {
         listID: Yup.string().trim(),
         tagID: Yup.string().trim(),
         subTasks: Yup.array().of(Yup.object({
-            heading: Yup.string().trim().default("New Task"),
+            heading: Yup.string().trim(),
             done: Yup.boolean()
         }))
     })
@@ -268,12 +267,12 @@ function AddTaskForm({ closeModal }) {
         setFieldValue
     } = useFormik({
         initialValues: {
-            heading: "",
-            dueDate: "",
-            description: "",
-            listID: "",
-            tagID: "",
-            subTasks: []
+            heading: undefined,
+            dueDate: undefined,
+            description: undefined,
+            listID: undefined,
+            tagID: undefined,
+            subTasks: undefined
         },
         validationSchema: Schema,
         onSubmit: async (values) => {
@@ -349,8 +348,7 @@ function AddTaskForm({ closeModal }) {
 
 
                     <select name="listID" value={values.listID} id="listID" className='form-input' onChange={handleChange}
-                        onBlur={handleBlur}>
-                        <option value={null} selected>--List</option>
+                        onBlur={handleBlur} defaultValue={null}>
                         {
                             listsQuery.data.map(list => {
                                 return (
@@ -362,8 +360,7 @@ function AddTaskForm({ closeModal }) {
                     <FormErrorArea condition={touched.listID && errors.listID} message={errors.listID} />
 
                     <select name="tagID" value={values.tagID} id="tagID" className='form-input' onChange={handleChange}
-                        onBlur={handleBlur}>
-                        <option value={null} selected>--Tag</option>
+                        onBlur={handleBlur} defaultValue={null}>
                         {
                             tagsQuery.data.map(tag => {
                                 return (
@@ -377,17 +374,17 @@ function AddTaskForm({ closeModal }) {
                     <div className="w-full h-12 rounded-md p-2 my-2 border border-solid border-gray-300 hover:bg-gray-300 flex items-center cursor-pointer mx-auto"
                         onClick={() => {
                             const newSubtask = {
-                                heading: '',
+                                heading: undefined,
                                 done: false,
                             };
-                            setFieldValue('subTasks', [...values.subTasks, newSubtask]);
+                            setFieldValue('subTasks', [...values?.subTasks, newSubtask]);
                         }}>
                         <span className="p-2 text-sm w-full">
                             <FontAwesomeIcon icon={faPlus} /> Add Subtask
                         </span>
                     </div>
                     <div ref={subtasksRef}>
-                        {values.subTasks.map((subtask, index) => (
+                        {values?.subTask?.map((subtask, index) => (
                             <div key={index} className="w-full h-12 rounded-md p-2 my-2 flex items-center cursor-pointer mx-auto">
                                 <input
                                     type="checkbox"
@@ -401,12 +398,12 @@ function AddTaskForm({ closeModal }) {
                                     name={`subTasks[${index}].heading`}
                                     className="form-input w-full"
                                     placeholder="New Subtask"
-                                    value={subtask.heading || "New Task"}
-                                    onChange={(e) => setFieldValue(`subTasks[${index}].heading`, e.target.value || "New Task")}
+                                    value={subtask.heading}
+                                    onChange={(e) => setFieldValue(`subTasks[${index}].heading`, e.target.value)}
                                 />
                                 <button
                                     onClick={() => {
-                                        const updatedSubTasks = [...values.subTasks];
+                                        const updatedSubTasks = [...values?.subTasks];
                                         updatedSubTasks.splice(index, 1);
                                         setFieldValue('subTasks', updatedSubTasks);
                                     }}

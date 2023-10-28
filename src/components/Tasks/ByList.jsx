@@ -1,123 +1,174 @@
-import { faPlus, faX, faSquareMinus, faCalendarXmark, faSquare, faStar } from '@fortawesome/free-solid-svg-icons'
+//^3rd
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { deleteTask, patchTask, toggleTaskDone } from '../../client/tasks'
-import { useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
-import { useState, useRef } from 'react'
+import { faPlus, faX, faSquareMinus, faCalendarXmark, faSquare, faStar } from '@fortawesome/free-solid-svg-icons'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
+import { useMutation, useQueryClient, useInfiniteQuery, useQuery, useQueries } from '@tanstack/react-query'
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
+//? Locale
 import FormErrorArea from '../FormErrorArea'
 import LoadingSpinner from '../LoadingSpinner'
 import ErrorPage from '../ErrorPage'
 import Portal from '../Portal'
-
+import SmallSpinner from '../SmallSpinner'
+import TasksView from './TasksView'
+import { getTasksByList, postTask } from '../../client/tasks'
 import { getLists, getListsCount } from '../../client/lists'
 import { getTags, getTagsCount } from '../../client/tags'
 
-export default function TasksView({ tasks }) {
-    const queryClient = useQueryClient();
-    const [focusedTask, setFocusedTask] = useState(null);
-    const [isUpdateTaskModalOpen, setIsUpdateTaskModalOpen] = useState(false)
+//& The Main Component 
+export default function TasksByList() {
+    //* Hooks
+    const bottomRef = useRef(null);
+    const location = useLocation();
+    const quertParams = new URLSearchParams(location.search);
+    const listID = quertParams.get('id');
+    const listHeading = quertParams.get('heading');
+    const [listTasksCount, setlistTasksCount] = useState(0);
 
-    const openUpdateTaskModal = () => {
-        setIsUpdateTaskModalOpen(true);
+    //* Add Task Form Modal Control
+    const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+
+    const openAddTaskModal = () => {
+        setIsAddTaskModalOpen(true);
     };
-    const closeUpdataeTaskModal = () => {
-        setIsUpdateTaskModalOpen(false);
+    const closeAddTaskModal = () => {
+        setIsAddTaskModalOpen(false);
     };
 
-    //* Mutation
-    const toogleDoneMutaion = useMutation({
-        mutationFn: async (focused) => {
-            await toggleTaskDone(focused._id);
-        },
-        onSuccess: () => {
-            // * Invalidate Caching
-            queryClient.queryCache.getAll().forEach((query) => {
-                if (query.queryKey[0].startsWith("tasks")) {
-                    queryClient.invalidateQueries(query.queryKey);
+    //* Queries 
+    const countQuery = useQuery(
+        {
+            queryKey: ["tasksCount", "lists", listID],
+            queryFn: async () => {
+                const response = await getTasksByList(listID);
+                if (response.error) {
+                    throw response.error
                 }
-            });
-            queryClient.invalidateQueries(["tasks"])
-            queryClient.invalidateQueries(["tasksCount"])
-        }
+                return response.tasks.length;
+            },
+            staleTime: 5 * 60 * 1000
+        },
+
+    )
+
+    const {
+        status,
+        error,
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useInfiniteQuery({
+        queryKey: ["tasks", "lists", listID],
+        queryFn: async ({ pageParam = 1 }) => {
+            const response = await getTasksByList(listID, pageParam, 20);
+            if (response.error) {
+                throw response.error;
+            }
+            return response.tasks;
+        },
+        getNextPageParam: (lastPage, allPages) => {
+            const nextPage = allPages.length + 1;
+            return nextPage > Math.ceil(listTasksCount / 20) ? undefined : nextPage;
+        },
+        staleTime: 5 * 60 * 1000
     });
 
 
-    //* Error 
-    if (toogleDoneMutaion.isError) {
-        return (<ErrorPage message={toogleDoneMutaion.error.message} />)
+    //* Effect
+    useEffect(() => {
+        (async () => {
+            if (countQuery.data) {
+                setlistTasksCount(countQuery.data);
+            }
+
+            const handleScroll = () => {
+                if (
+                    bottomRef.current &&
+                    window.innerHeight + window.scrollY >= bottomRef.current.offsetTop
+                ) {
+                    fetchNextPage();
+
+                }
+            };
+            window.addEventListener("scroll", handleScroll);
+            return () => {
+                window.removeEventListener("scroll", handleScroll);
+            };
+        })();
+    }, [countQuery, fetchNextPage]);
+
+
+    //* Loading 
+    if (countQuery.isLoading || status === "loading") {
+        return (
+            <div className='bg-gray-100 w-full h-screen my-3 mx-3 p-6 rounded-lg text-gray-700 relative'>
+                <div className='flex justify-center w-full items-center my-4 flex-wrap h-full'>
+                    <LoadingSpinner />
+                </div>
+            </div>
+        )
     }
 
+    //* Error 
+    if (countQuery.isError) {
+        return (
+            <div className='bg-gray-100 w-full h-screen my-3 mx-3 p-6 rounded-lg text-gray-700 relative'>
+                <div className='flex justify-center items-center my-4 flex-wrap h-full'>
+                    <ErrorPage message={countQuery.error.message} />
+                </div>
+            </div>
+        )
+
+    }
+    if (error) {
+        return (
+            <div className='bg-gray-100 w-full h-screen my-3 mx-3 p-6 rounded-lg text-gray-700 relative'>
+                <div className='flex justify-center w-full  items-center my-4 flex-wrap h-full'>
+                    <ErrorPage message={error.message} />
+                </div>
+            </div>
+        )
+    }
+
+    //* Component
     return (
+
         <>
             {
-                isUpdateTaskModalOpen ? (
+                isAddTaskModalOpen ? (
                     <Portal>
-                        <UpdateTaskForm task={focusedTask} closeModal={closeUpdataeTaskModal} />
-                    </Portal>
+                        <AddTaskForm closeModal={closeAddTaskModal} />
+                    </Portal >
                 ) : null
             }
-            {tasks.map((task) => (
-                <div
-                    key={task._id}
-                    className=" flex flex-col w-full h-fit rounded-md p-2 my-2 border border-solid  border-gray-300 hover:bg-gray-300 cursor-pointer mx-auto"
-                >
-                    <div className=' flex items-center w-full mb-2 hover:bg-gray-300  '>
-                        <input type="checkbox" className="w-5 h-5 aspect-square rounded-md mr-2" checked={task.done}
-                            onChange={async () => {
-                                await toogleDoneMutaion.mutateAsync(task)
-                            }} />
-                        <span
-                            className="inline-flex items-center text-xl h-1/2 w-5/6"
-                            style={{ textDecoration: task.done ? "line-through" : 'none', textDecorationThickness: "3px" }}
-                            onClick={() => { setFocusedTask(task); openUpdateTaskModal() }}
-                        >
-                            {task.heading}
+
+            <div className={`bg-gray-100 w-full h-fit my-3 mx-3 p-6 rounded-lg text-gray-700 relative`}>
+                <h1 className='md:text-4xl text-3xl font ml-14'>{listHeading}<span className='m-1 px-3 py-1 bg-gray-300 rounded-md '>{listTasksCount}</span></h1>
+                <div className='flex flex-col items-center my-5 h-full'>
+                    <div className="w-full h-12 rounded-md p-2 my-2 border border-solid  border-gray-300 hover:bg-gray-300 flex items-center cursor-pointer mx-auto" onClick={() => { openAddTaskModal() }} >
+                        <span className=' p-2 text-lg w-full '>
+                            <FontAwesomeIcon icon={faPlus} /> Add New Task
                         </span>
                     </div>
-                    <div className='flex text-sm flex-wrap'>
-                        {
-                            task.dueDate && (
-                                <span className={`flex items-center  ${new Date(task.dueDate) <= Date.now() ? 'text-red-700' : ''}`}>
-                                    <FontAwesomeIcon icon={faCalendarXmark} className='mr-1' />
-                                    <span>{task.dueDate.split("T")[0]}</span>
-                                    < div className="bg-gray-300 w-0.5 h-7 mx-2 rounded-md inline-block"></div>
-                                </span>)
-                        }
-                        {
-                            task.subTasksCount > 0 && (
-                                <span className={`flex items-center`}>
-                                    <span className='m-1 px-2 py-1 bg-gray-400 rounded-md font-bold'>{task.subTasksCount}</span>
-                                    subtasks
-                                    < div className="bg-gray-300 w-0.5 h-7 mx-2 rounded-md inline-block"></div>
-                                </span>)
-                        }
-                        {
-                            task.listID && (
-                                <span className={`flex items-center`}>
-                                    <FontAwesomeIcon icon={faSquare} className='mr-1' style={{ color: task.listID.color }} />
-                                    {task.listID.heading}
-                                    < div className="bg-gray-300 w-0.5 h-7 mx-2 rounded-md inline-block"></div>
-                                </span>)
-                        }
-                        {
-                            task.tagID && (
-                                <span className={`flex items-center`}>
-                                    <FontAwesomeIcon icon={faStar} className='mr-1' style={{ color: task.tagID.color }} />
-                                    {task.tagID.heading}
-                                    < div className="bg-gray-300 w-0.5 h-7 mx-2 rounded-md inline-block"></div>
-                                </span>)
-                        }
-                    </div>
+                    <TasksView tasks={data.pages.flat()} />
+                    {isFetchingNextPage ? (
+                        <div className=" absolute bottom-0 left-1/2 text-xl">
+                            <SmallSpinner />
+                        </div>
+                    ) : null}
                 </div>
-            ))}
+                <div ref={bottomRef}></div>
+            </div >
         </>
     )
 }
 
-//& Updating Task Modal Component
-export function UpdateTaskForm({ task, closeModal }) {
+//& Adding Task Modal Component 
+function AddTaskForm({ closeModal }) {
     // * Hooks
     let queryClient = useQueryClient();
     let [apiError, setApiError] = useState('');
@@ -137,22 +188,9 @@ export function UpdateTaskForm({ task, closeModal }) {
     })
 
     // * Mutation
-    const updatingTaskMutation = useMutation({
+    const addingTaskMutation = useMutation({
         mutationFn: async (taskData) => {
-            const response = await patchTask(taskData, task._id);
-            return response
-        },
-        onSuccess: () => {
-            // * Invalidate Caching
-            queryClient.invalidateQueries(["tasks"])
-            queryClient.invalidateQueries(["tasksCount"])
-            closeModal();
-        }
-    });
-
-    const deletingTaskMutation = useMutation({
-        mutationFn: async () => {
-            const response = await deleteTask(task._id);
+            const response = await postTask(taskData);
             return response
         },
         onSuccess: () => {
@@ -232,19 +270,17 @@ export function UpdateTaskForm({ task, closeModal }) {
         setFieldValue
     } = useFormik({
         initialValues: {
-            heading: task.heading,
-            description: task.description ?? undefined,
-            dueDate: new Date(task.dueDate) ?? undefined,
-            listID: task?.listID?._id ?? undefined,
-            tagID: task?.tagID?._id ?? undefined,
-            subTasks: task?.subTasks?.map((sub) => {
-                return { heading: sub.heading, done: sub.done }
-            }) ?? undefined
+            heading: undefined,
+            dueDate: undefined,
+            description: undefined,
+            listID: undefined,
+            tagID: undefined,
+            subTasks: undefined
         },
         validationSchema: Schema,
         onSubmit: async (values) => {
             let taskData = values;
-            const result = await updatingTaskMutation.mutateAsync(taskData)
+            const result = await addingTaskMutation.mutateAsync(taskData)
             if (result.error) {
                 setApiError(result.error.message);
             }
@@ -252,13 +288,13 @@ export function UpdateTaskForm({ task, closeModal }) {
     });
 
     //* Loading 
-    if (updatingTaskMutation.isLoading || deletingTaskMutation.isLoading || listsQuery.isLoading || tagsQuery.isLoading) {
+    if (addingTaskMutation.isLoading || listsQuery.isLoading || tagsQuery.isLoading) {
         return (<LoadingSpinner />)
     }
 
     //* Error 
-    if (updatingTaskMutation.isError) {
-        return (<ErrorPage message={updatingTaskMutation.error.message} />)
+    if (addingTaskMutation.isError) {
+        return (<ErrorPage message={addingTaskMutation.error.message} />)
     }
     if (tagsQuery.isError) {
         return (<ErrorPage message={tagsQuery.error.message} />)
@@ -266,13 +302,11 @@ export function UpdateTaskForm({ task, closeModal }) {
     if (listsQuery.isError) {
         return (<ErrorPage message={listsQuery.error.message} />)
     }
-    if (deletingTaskMutation.isError) {
-        return (<ErrorPage message={deletingTaskMutation.error.message} />)
-    }
 
     //* Component 
     return (
         <>
+
             <div className='bg-gray-100 duration-200 w-3/6 h-5/6 my-3 ml-3 mr-6 p-6 rounded-lg text-gray-700 absolute right-0 top-0 z-50 overflow-y-auto'>
                 <form
                     onSubmit={handleSubmit}
@@ -280,7 +314,7 @@ export function UpdateTaskForm({ task, closeModal }) {
                     <FontAwesomeIcon icon={faX}
                         className=' absolute top-0 right-0 cursor-pointer hover:text-yellow-400 duration-200 text-lg'
                         onClick={() => closeModal()} />
-                    <h2 className='text-3xl my-5 font-semibold'>Update Task</h2>
+                    <h2 className='text-3xl my-5 font-semibold'>Add Task</h2>
                     <FormErrorArea condition={apiError} message={apiError} />
 
                     <input type="text"
@@ -321,7 +355,7 @@ export function UpdateTaskForm({ task, closeModal }) {
                         {
                             listsQuery.data.map(list => {
                                 return (
-                                    <option value={list._id} key={list._id} defa={list._id === values.listID}> {list.heading}</option>
+                                    <option key={list._id} value={list._id}> {list.heading}</option>
                                 )
                             })
                         }
@@ -333,7 +367,7 @@ export function UpdateTaskForm({ task, closeModal }) {
                         {
                             tagsQuery.data.map(tag => {
                                 return (
-                                    <option value={tag._id} key={tag._id} selected={tag._id === values.tagID}> {tag.heading}</option>
+                                    <option key={tag._id} value={tag._id} > {tag.heading}</option>
                                 )
                             })
                         }
@@ -351,7 +385,6 @@ export function UpdateTaskForm({ task, closeModal }) {
                         <span className="p-2 text-sm w-full">
                             <FontAwesomeIcon icon={faPlus} /> Add Subtask
                         </span>
-
                     </div>
                     <div ref={subtasksRef}>
                         {values?.subTasks?.map((subtask, index) => (
@@ -373,7 +406,7 @@ export function UpdateTaskForm({ task, closeModal }) {
                                 />
                                 <button
                                     onClick={() => {
-                                        const updatedSubTasks = [...values?.subTasks];
+                                        const updatedSubTasks = [...values.subTasks];
                                         updatedSubTasks.splice(index, 1);
                                         setFieldValue('subTasks', updatedSubTasks);
                                     }}
@@ -382,13 +415,10 @@ export function UpdateTaskForm({ task, closeModal }) {
                                 </button>
                             </div>
                         ))}
-
                     </div>
-                    <button type='submit' className='form-button w-32'>save</button>
+                    <FormErrorArea condition={touched.color && errors.color} message={errors.color} />
+                    <button type='submit' className='form-button w-32'>Add</button>
                 </form>
-                <div className='flex justify-center w-full'>
-                    <button className='form-button w-32' onClick={() => { deletingTaskMutation.mutateAsync() }}>Delete</button>
-                </div>
             </div >
         </>
     )

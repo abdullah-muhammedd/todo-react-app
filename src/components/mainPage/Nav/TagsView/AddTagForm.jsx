@@ -9,14 +9,13 @@ import { useFormik } from 'formik';
 import FormErrorArea from '../../../FormErrorArea'
 import LoadingSpinner from '../../../LoadingSpinner'
 import ErrorPage from '../../../ErrorPage'
-import { updateListMutation } from '../../../../query/list'
-import listScheam from '../../../../validation/listScheam'
+import { addTagMutation } from '../../../../query/tag';
+import tagSchema from '../../../../validation/tagSchema';
 
-
-export default function UpdateListForm({ list, closeModal }) {
+export default function AddTagForm({ closeModal }) {
     // * Hooks
     let [apiError, setApiError] = useState('');
-    const updatingListMutation = updateListMutation(() => { closeModal() })
+    const addingTagMutation = addTagMutation(() => { closeModal() });
 
     // * Formik
     const {
@@ -28,44 +27,42 @@ export default function UpdateListForm({ list, closeModal }) {
         errors,
     } = useFormik({
         initialValues: {
-            heading: list.heading,
-            color: list.color,
+            heading: "",
+            color: "#00FF00",
         },
-        validationSchema: listScheam,
+        validationSchema: tagSchema,
         onSubmit: async (values) => {
-            let listData = values;
-            listData._id = list._id;
-            const result = await updatingListMutation.mutateAsync(listData)
+            let tagData = values;
+            const result = await addingTagMutation.mutateAsync(tagData)
             if (result.error) {
                 setApiError(result.error.message);
             }
         },
-
     });
 
     //* Loading 
-    if (updatingListMutation.isLoading) {
+    if (addingTagMutation.isLoading) {
         return (<LoadingSpinner />)
     }
 
     //* Error 
-    if (updatingListMutation.isError) {
-        return (<ErrorPage message={updatingListMutation.error.message} />)
+    if (addingTagMutation.isError) {
+        return (<ErrorPage message={addingTagMutation.error.message} />)
     }
+
 
     //* Component 
     return (
         <>
             <div className='flex justify-center'>
-                <div
-                    className='h-screen w-screen p-5 flex justify-center items-center '>
+                <div className='h-screen w-screen p-5 flex justify-center items-center '>
                     <form
                         onSubmit={handleSubmit}
                         className=' relative flex flex-col justify-center items-center md:h-6/12 md:w-6/12 p-5 bg-gray-100 rounded-md'>
                         <FontAwesomeIcon icon={faX}
                             className=' absolute top-5 right-5 cursor-pointer hover:text-yellow-400 duration-200 text-lg'
                             onClick={() => closeModal()} />
-                        <h2 className='text-4xl mb-5 font-semibold'>Update List</h2>
+                        <h2 className='text-4xl mb-5 font-semibold'>Add Tag</h2>
                         <FormErrorArea condition={apiError} message={apiError} />
 
                         <input
@@ -74,7 +71,6 @@ export default function UpdateListForm({ list, closeModal }) {
                             name='heading'
                             className='form-input'
                             placeholder='Heading'
-                            value={values.heading}
                             onChange={handleChange}
                             onBlur={handleBlur} />
                         <FormErrorArea condition={touched.heading && errors.heading} message={errors.heading} />
@@ -85,12 +81,11 @@ export default function UpdateListForm({ list, closeModal }) {
                             name='color'
                             className='form-input'
                             placeholder='Color'
-                            value={values.color}
                             onChange={handleChange}
                             onBlur={handleBlur}
                         />
                         <FormErrorArea condition={touched.color && errors.color} message={errors.color} />
-                        <button type='submit' className='form-button'>Update</button>
+                        <button type='submit' className='form-button w-10/12'>Add</button>
                     </form>
                 </div>
             </div >

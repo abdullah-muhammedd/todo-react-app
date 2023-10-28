@@ -9,14 +9,14 @@ import { useFormik } from 'formik';
 import FormErrorArea from '../../../FormErrorArea'
 import LoadingSpinner from '../../../LoadingSpinner'
 import ErrorPage from '../../../ErrorPage'
-import { updateListMutation } from '../../../../query/list'
-import listScheam from '../../../../validation/listScheam'
+import { updateTagMutation } from '../../../../query/tag';
+import tagSchema from '../../../../validation/tagSchema';
 
 
-export default function UpdateListForm({ list, closeModal }) {
+export default function UpdateTagForm({ tag, closeModal }) {
     // * Hooks
     let [apiError, setApiError] = useState('');
-    const updatingListMutation = updateListMutation(() => { closeModal() })
+    const updatingTagMutation = updateTagMutation(() => { closeModal() })
 
     // * Formik
     const {
@@ -28,14 +28,14 @@ export default function UpdateListForm({ list, closeModal }) {
         errors,
     } = useFormik({
         initialValues: {
-            heading: list.heading,
-            color: list.color,
+            heading: tag.heading,
+            color: tag.color,
         },
-        validationSchema: listScheam,
+        validationSchema: tagSchema,
         onSubmit: async (values) => {
-            let listData = values;
-            listData._id = list._id;
-            const result = await updatingListMutation.mutateAsync(listData)
+            let tagData = values;
+            tagData._id = tag._id;
+            const result = await updatingTagMutation.mutateAsync(tagData)
             if (result.error) {
                 setApiError(result.error.message);
             }
@@ -44,13 +44,13 @@ export default function UpdateListForm({ list, closeModal }) {
     });
 
     //* Loading 
-    if (updatingListMutation.isLoading) {
+    if (updatingTagMutation.isLoading) {
         return (<LoadingSpinner />)
     }
 
     //* Error 
-    if (updatingListMutation.isError) {
-        return (<ErrorPage message={updatingListMutation.error.message} />)
+    if (updatingTagMutation.isError) {
+        return (<ErrorPage message={updatingTagMutation.error.message} />)
     }
 
     //* Component 
@@ -65,7 +65,7 @@ export default function UpdateListForm({ list, closeModal }) {
                         <FontAwesomeIcon icon={faX}
                             className=' absolute top-5 right-5 cursor-pointer hover:text-yellow-400 duration-200 text-lg'
                             onClick={() => closeModal()} />
-                        <h2 className='text-4xl mb-5 font-semibold'>Update List</h2>
+                        <h2 className='text-4xl mb-5 font-semibold'>Update Tag</h2>
                         <FormErrorArea condition={apiError} message={apiError} />
 
                         <input
@@ -97,3 +97,4 @@ export default function UpdateListForm({ list, closeModal }) {
         </>
     )
 }
+

@@ -8,7 +8,7 @@ import { faBars, faSignOut } from '@fortawesome/free-solid-svg-icons';
 import { userReducer, loggedOut } from '../../../slices/userSlice';
 import NavTasksView from './NavTasksView';
 import NavListsView from './ListsView/NavListsView';
-import NavTagsView from './NavTagsView';
+import NavTagsView from './TagsView/NavTagsView';
 import Divider from './Divider';
 import { getLogout } from "../../../client/auth"
 

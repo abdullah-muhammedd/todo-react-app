@@ -1,12 +1,11 @@
 import axios from "axios";
-
-async function getTasksNonDone(page = 1, perPage = 20) {
+import moment from "moment";
+async function getAllTasks(page = 1, perPage = 20) {
     try {
         const response = await axios.get("http://localhost:3030/api/v1/tasks", {
             params: {
                 page,
                 perPage,
-                done: "false"
             },
             validateStatus: function (status) {
                 return status >= 200 && status < 500;
@@ -29,23 +28,6 @@ async function getTasksDone(page = 1, perPage = 20) {
                 perPage,
                 done: true
             },
-            validateStatus: function (status) {
-                return status >= 200 && status < 500;
-            },
-            headers: {
-                "Content-Type": "application/json",
-            },
-            withCredentials: true,
-        })
-        return response.data;
-    } catch (error) {
-        throw error
-    }
-}
-
-async function getTasksCount() {
-    try {
-        const response = await axios.get("http://localhost:3030/api/v1/tasks/count", {
             validateStatus: function (status) {
                 return status >= 200 && status < 500;
             },
@@ -141,11 +123,104 @@ async function deleteTask(taskID) {
     }
 }
 
+async function getTasksUpcomming(page = 1, perPage = 20) {
+    const dueDateFrom =  moment(new Date(Date.now())).format('YYYY-MM-DD').toString();
+    try {
+        const response = await axios.get("http://localhost:3030/api/v1/tasks", {
+            params: {
+                page,
+                perPage,
+                done: false,
+                dueDateFrom: dueDateFrom
+            },
+            validateStatus: function (status) {
+                return status >= 200 && status < 500;
+            },
+            headers: {
+                "Content-Type": "application/json",
+            },
+            withCredentials: true,
+        })
+        return response.data;
+    } catch (error) {
+        throw error
+    }
+}
+async function getTasksToday(page = 1, perPage = 20) {
+    const dueDateFrom =  moment(new Date(Date.now())).format('YYYY-MM-DD').toString();
+    const dueDateTo = moment(new Date(Date.now())).add("day").format('YYYY-MM-DD');
+    try {
+        const response = await axios.get("http://localhost:3030/api/v1/tasks", {
+            params: {
+                page,
+                perPage,
+                done: false,
+                dueDateFrom: dueDateFrom,
+                dueDateTo:dueDateTo
+            },
+            validateStatus: function (status) {
+                return status >= 200 && status < 500;
+            },
+            headers: {
+                "Content-Type": "application/json",
+            },
+            withCredentials: true,
+        })
+        return response.data;
+    } catch (error) {
+        throw error
+    }
+}
+async function getTasksByList(listID , page = 1, perPage = 20) {
+    try {
+        const response = await axios.get(`http://localhost:3030/api/v1/tasks/lists/${listID}`, {
+        params: {
+            page,
+            perPage,
+        },
+            validateStatus: function (status) {
+                return status >= 200 && status < 500;
+            },
+            headers: {
+                "Content-Type": "application/json",
+            },
+            withCredentials: true,
+        })
+        return response.data;
+    } catch (error) {
+        throw error
+    }
+}
+async function getTasksByTag(tagID , page = 1, perPage = 20) {
+    try {
+        const response = await axios.get(`http://localhost:3030/api/v1/tasks/tags/${tagID}`, {
+        params: {
+            page,
+            perPage,
+        },
+            validateStatus: function (status) {
+                return status >= 200 && status < 500;
+            },
+            headers: {
+                "Content-Type": "application/json",
+            },
+            withCredentials: true,
+        })
+        return response.data;
+    } catch (error) {
+        throw error
+    }
+}
+
 export {
-    getTasksNonDone,
+    getAllTasks,
     getTasksDone,
     postTask,
     patchTask,
     deleteTask,
-    toggleTaskDone
+    toggleTaskDone,
+    getTasksUpcomming,
+    getTasksToday,
+    getTasksByList,
+    getTasksByTag
 }
