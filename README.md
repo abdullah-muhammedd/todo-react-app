@@ -69,7 +69,8 @@ The app should now be running at http://localhost:5173/app in your web browser.
 ## preview 
 
 
-![![Watch]((https://i.stack.imgur.com/Vp2cE.png))](https://github.com/abdullah-muhammedd/banners/blob/master/todo-preview_dupm51Me.mp4)
+https://github.com/abdullah-muhammedd/todo-react-app/assets/78245792/3779ec22-b3ba-46e4-8205-e8ed4122016a
+
 
 
 ## License
