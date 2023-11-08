@@ -68,6 +68,10 @@ The app should now be running at http://localhost:5173/app in your web browser.
 
 ## preview 
 
+
+https://github.com/abdullah-muhammedd/todo-react-app/assets/78245792/548464c0-7b8b-4b94-abe7-1289b67adf3b
+
+
 ## License
 
 This project is open-source and available under the MIT License. You can find the license details in the LICENSE file included in this repository.
