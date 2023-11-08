@@ -8,7 +8,7 @@ The Todo-React-App is a project created to demonstrate the practical usage of th
 
 The primary purpose of this project is to learn React and explore its ecosystem. React is a popular JavaScript library for building user interfaces, and by creating this Todo app, I aimed to gain hands-on experience with React's core concepts, state management, and modern tooling. 
 
-The other main purpose is to show my todo-api and use it in a real app.
+The other main purpose is to show my [todo-api](https://github.com/abdullah-muhammedd/todo-api.git) and use it in a real app.
 
 ## Technologies and Libraries Used
 
