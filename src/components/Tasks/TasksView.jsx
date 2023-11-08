@@ -43,7 +43,6 @@ export default function TasksView({ tasks }) {
         }
     });
 
-
     //* Error 
     if (toogleDoneMutaion.isError) {
         return (<ErrorPage message={toogleDoneMutaion.error.message} />)
