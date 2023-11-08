@@ -69,7 +69,7 @@ The app should now be running at http://localhost:5173/app in your web browser.
 ## preview 
 
 
-![![Watch]()](https://github.com/abdullah-muhammedd/banners/blob/master/todo-preview_dupm51Me.mp4)
+![![Watch]((https://i.stack.imgur.com/Vp2cE.png))](https://github.com/abdullah-muhammedd/banners/blob/master/todo-preview_dupm51Me.mp4)
 
 
 ## License
