@@ -69,7 +69,7 @@ The app should now be running at http://localhost:5173/app in your web browser.
 ## preview 
 
 
-https://github.com/abdullah-muhammedd/todo-react-app/assets/78245792/548464c0-7b8b-4b94-abe7-1289b67adf3b
+![](https://github.com/abdullah-muhammedd/banners/blob/master/todo-preview_dupm51Me.mp4)
 
 
 ## License
